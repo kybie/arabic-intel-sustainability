@@ -1,18 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Intel: Sustainability Through the Ages</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <script>
-    // Add click functionality to reveal card details
-    document.addEventListener('DOMContentLoaded', function() {
+    // ==========================================
+    // LANGUAGE DETECTION & RTL MODE HANDLER
+    // ==========================================
+
+    // Configuration for supported languages
+    const LANGUAGE_CONFIG = {
+      en: {
+        code: 'en',
+        direction: 'ltr',
+        name: 'English'
+      },
+      ar: {
+        code: 'ar',
+        direction: 'rtl',
+        name: 'العربية'
+      }
+    };
+
+    // Storage key for user's language preference
+    const LANGUAGE_STORAGE_KEY = 'intel-sustainability-language';
+
+    // Detect browser's default language
+    function getBrowserLanguage() {
+      const browserLang = navigator.language || navigator.userLanguage;
+      // Extract language code (e.g., 'ar-AE' -> 'ar')
+      const langCode = browserLang.split('-')[0];
+      return LANGUAGE_CONFIG[langCode] ? langCode : 'en';
+    }
+
+    // Get the initial language preference
+    function getInitialLanguage() {
+      // 1. Check if user has a saved preference in localStorage
+      const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (savedLang && LANGUAGE_CONFIG[savedLang]) {
+        return savedLang;
+      }
+      
+      // 2. Fall back to browser's language preference
+      return getBrowserLanguage();
+    }
+
+    // Apply language and RTL/LTR mode to the document
+    function applyLanguage(lang) {
+      const config = LANGUAGE_CONFIG[lang];
+      if (!config) {
+        console.warn('Language not supported:', lang);
+        return;
+      }
+
+      const htmlElement = document.documentElement;
+      
+      // Update HTML attributes for language and direction
+      htmlElement.setAttribute('lang', config.code);
+      htmlElement.setAttribute('dir', config.direction);
+      
+      // Store the language preference
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+      
+      // Dispatch custom event for other scripts to listen to
+      window.dispatchEvent(new CustomEvent('languageChanged', {
+        detail: { language: lang, direction: config.direction }
+      }));
+      
+      console.log(`Language changed to: ${config.name} (${config.direction})`);
+    }
+
+    // Switch language function (called by language buttons)
+    function switchLanguage(lang) {
+      applyLanguage(lang);
+    }
+
+    // Initialize language on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      // Set initial language
+      const initialLang = getInitialLanguage();
+      applyLanguage(initialLang);
+
+      // ==========================================
+      // INTERACTIVE ELEMENTS HANDLER
+      // ==========================================
+
       // Handle flip cards
       const flipCards = document.querySelectorAll('.flip-card');
       flipCards.forEach(card => {
+        // Make cards keyboard accessible
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        
+        // Click handler
         card.addEventListener('click', function() {
           this.classList.toggle('flipped');
+        });
+        
+        // Keyboard handler for Enter and Space
+        card.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.classList.toggle('flipped');
+          }
         });
       });
       
@@ -23,6 +117,37 @@
           this.classList.toggle('active');
         });
       });
+
+      // Handle newsletter form submission
+      const form = document.getElementById('newsletterForm');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const email = document.getElementById('emailInput').value;
+          const successMessage = document.getElementById('successMessage');
+          
+          // Simple validation
+          if (email && email.includes('@')) {
+            successMessage.style.display = 'block';
+            form.reset();
+            
+            // Hide message after 4 seconds
+            setTimeout(() => {
+              successMessage.style.display = 'none';
+            }, 4000);
+          }
+        });
+      }
+
+      // ==========================================
+      // LANGUAGE CHANGE LISTENER
+      // ==========================================
+      // Optional: Listen for language changes to update UI elements
+      window.addEventListener('languageChanged', function(event) {
+        // You can add additional UI updates here if needed
+        const { language, direction } = event.detail;
+        console.log(`Page is now in ${direction} mode for ${language}`);
+      });
     });
   </script>
 </head>
@@ -30,6 +155,12 @@
 
   <!-- Header / Hero Section -->
   <header>
+    <!-- Language Switcher - English on Right -->
+    <button onclick="switchLanguage('en')" class="lang-btn lang-btn-en" aria-label="Select English language">English</button>
+    
+    <!-- Language Switcher - Arabic on Left -->
+    <button onclick="switchLanguage('ar')" class="lang-btn lang-btn-ar" aria-label="اختر اللغة العربية">عربي</button>
+
     <div>
       <!-- Ask Copilot to teach you about `.svg`. 🙂 You'll need to resize the logo with CSS. -->
       <img src="img/intel-header-logo.svg" alt="Intel Logo" />
@@ -47,8 +178,88 @@
     </div>
   </header>
 
+  <!-- Features Section -->
+  <section class="features-section" aria-labelledby="featureHeading">
+    <div class="container">
+      <div class="features-header">
+        <h2 id="featureHeading">🌱 Our Sustainability Pillars</h2>
+        <p class="features-subtitle">Intel's commitment to environmental responsibility and innovation</p>
+      </div>
+      
+      <div class="row g-4 features-grid">
+        <!-- Feature 1 -->
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <h3><span class="feature-icon" aria-hidden="true">🌍</span> Climate Action</h3>
+            <!-- Accordion (Bootstrap) inside the card -->
+            <div class="accordion pillar-accordion" id="pillarOne">
+              <div class="accordion-item">
+                <h4 class="accordion-header" id="pillarOneHeading">
+                  <button class="accordion-button collapsed learn-more-btn" type="button" data-bs-toggle="collapse" data-bs-target="#pillarOneBody" aria-expanded="false" aria-controls="pillarOneBody">
+                    Learn More
+                  </button>
+                </h4>
+                <div id="pillarOneBody" class="accordion-collapse collapse" aria-labelledby="pillarOneHeading" data-bs-parent="#pillarOne">
+                  <div class="accordion-body">
+                    Intel is committed to achieving net-zero greenhouse gas emissions across its global operations by 2040. This includes Scope 1 and 2 emissions, and we're investing heavily in renewable energy, chemical abatement technologies, and energy-efficient manufacturing processes to drive meaningful environmental impact.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Feature 2 -->
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <h3><span class="feature-icon" aria-hidden="true">🤝</span> Responsibility</h3>
+            <!-- Accordion (Bootstrap) inside the card -->
+            <div class="accordion pillar-accordion" id="pillarTwo">
+              <div class="accordion-item">
+                <h4 class="accordion-header" id="pillarTwoHeading">
+                  <button class="accordion-button collapsed learn-more-btn" type="button" data-bs-toggle="collapse" data-bs-target="#pillarTwoBody" aria-expanded="false" aria-controls="pillarTwoBody">
+                    Learn More
+                  </button>
+                </h4>
+                <div id="pillarTwoBody" class="accordion-collapse collapse" aria-labelledby="pillarTwoHeading" data-bs-parent="#pillarTwo">
+                  <div class="accordion-body">
+                    We advance ethical and responsible practices across our entire supply chain and in all communities where we operate. From fair labor standards to community engagement programs, Intel ensures positive social impact while maintaining the highest standards of corporate governance and transparency worldwide.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Feature 3 -->
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <h3><span class="feature-icon" aria-hidden="true">💡</span> Innovation</h3>
+            <!-- Accordion (Bootstrap) inside the card -->
+            <div class="accordion pillar-accordion" id="pillarThree">
+              <div class="accordion-item">
+                <h4 class="accordion-header" id="pillarThreeHeading">
+                  <button class="accordion-button collapsed learn-more-btn" type="button" data-bs-toggle="collapse" data-bs-target="#pillarThreeBody" aria-expanded="false" aria-controls="pillarThreeBody">
+                    Learn More
+                  </button>
+                </h4>
+                <div id="pillarThreeBody" class="accordion-collapse collapse" aria-labelledby="pillarThreeHeading" data-bs-parent="#pillarThree">
+                  <div class="accordion-body">
+                    Through cutting-edge technology and strategic partnerships, Intel leads the semiconductor industry toward sustainable solutions. Our advanced manufacturing processes reduce environmental impact while enabling next-generation technologies that power a more sustainable digital future for everyone.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    </div>
+  </section>
+
+  <p>Scroll to view timeline | Click on cards to reveal details!</p>
+
   <!-- Timeline Cards Section -->
-  <section>
+  <section aria-label="Intel Sustainability Timeline">
 
     <!-- Card 1: 1968 -->
     <div class="flip-card">
@@ -212,6 +423,45 @@
       </div>
     </div>
   </section>
-  <p>Scroll to view timeline | Click on cards to reveal details!</p>
+
+  <!-- Newsletter Subscription Section -->
+  <section class="newsletter-section" aria-labelledby="newsletterHeading">
+    <div class="newsletter-container">
+      <div class="newsletter-header">
+        <h2 id="newsletterHeading">📬 Stay in the Loop</h2>
+        <p class="newsletter-subtitle">Get the latest updates on Intel's sustainability journey and environmental initiatives delivered to your inbox.</p>
+      </div>
+      
+      <form id="newsletterForm" class="newsletter-form" aria-label="Newsletter subscription form">
+        <div class="form-group">
+          <label for="emailInput">Email Address</label>
+          <input 
+            type="email" 
+            id="emailInput" 
+            class="email-input" 
+            placeholder="you@example.com"
+            required 
+            aria-required="true"
+          />
+        </div>
+
+        <button type="submit" class="subscribe-btn">Subscribe</button>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message" role="alert" aria-live="polite" style="display: none;">
+          <span class="success-icon">✓</span>
+          <span>Thank you! Check your email for confirmation.</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Simple Footer -->
+  <footer class="site-footer">
+    <p>Intel Sustainability Timeline Project | Built for learning</p>
+  </footer>
+  
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
